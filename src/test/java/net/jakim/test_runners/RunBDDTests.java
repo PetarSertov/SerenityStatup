@@ -1,8 +1,6 @@
-package test_runners;
+package net.jakim.test_runners;
 
-
-import cucumber.api.CucumberOptions;
-import cucumber.api.SnippetType;
+import io.cucumber.junit.CucumberOptions;
 import net.serenitybdd.cucumber.CucumberWithSerenity;
 import org.junit.runner.RunWith;
 
@@ -14,8 +12,7 @@ import org.junit.runner.RunWith;
                         "junit:target/cucumber.xml"
                 },
         features = "features/",
-        glue = "steps_definition",
-        snippets = SnippetType.CAMELCASE,
+        glue = "net/jakim/steps_definition",
         tags = { "" } )
 public class RunBDDTests
 {
