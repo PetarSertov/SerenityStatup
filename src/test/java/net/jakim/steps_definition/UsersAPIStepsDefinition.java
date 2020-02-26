@@ -1,19 +1,23 @@
 package net.jakim.steps_definition;
 
-
+import io.cucumber.java.Before;
+import io.cucumber.java.Transpose;
+import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import net.jakim.utils.services.EmployeesServices;
-import net.jakim.utils.entities.Employ;
+import net.jakim.steps_libraries.api.CommonAPICalls;
 import net.thucydides.core.annotations.Steps;
+import org.json.JSONException;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.jakim.steps_libraries.api.CommonAPICalls;
 
-import java.util.List;
+import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static net.jakim.utils.JSONUtils.*;
+import static net.serenitybdd.rest.SerenityRest.lastResponse;
+import static net.serenitybdd.rest.SerenityRest.restAssuredThat;
 
 /**
  * @author yakimfb
@@ -22,45 +26,46 @@ import static org.hamcrest.Matchers.*;
 public class UsersAPIStepsDefinition
 {
     private final static Logger LOG = LoggerFactory.getLogger( UsersAPIStepsDefinition.class );
+
     @Steps
-    CommonAPICalls api;
+    CommonAPICalls restClient;
 
-    @When( "{} does GET request to {string}" )
-    public void performGetRequest( String userName,
-                                   String resourcePath )
+    @Given( "the following body is prepared:" )
+    public void theFollowingBody( @Transpose Map<String, String> requestBody )
     {
-        LOG.info( "Inside performGetRequest() method" );
-        api.get( resourcePath );
-        LOG.info( "Exiting performGetRequest() method" );
+        String jsonString = mapToJson( requestBody );
+        restClient.setsBody( jsonString );
     }
 
-    @Then( "request is successful with code {int}" )
-    public void requestIsSuccessfulWithCode( int statusCode )
+    @When( "the api client does a POST to {string}" )
+    public void playerCompletesTheChangePasswordForm( String restEndPoint )
     {
-        assertThat( api.getLastResponse()
-                       .statusCode(),
-                    is( equalTo( statusCode ) ) );
-        ///restAssuredThat( lastResponse -> lastResponse.body( equalTo( statusCode ) ) );
+        restClient.postsTo( restEndPoint );
     }
 
-    @Then( "all existing users are returned" )
-    public void allExistingUsersAreReturned()
+    @Then( "a response with status code {int} is returned" )
+    public void responseIsReturnedWithStatus( int code )
     {
-        List<Employ> actualEmployees = EmployeesServices.extractEmployeesFrom( api.getLastResponse()
-                                                                                  .getBody()
-                                                                                  .jsonPath()
-                                                                                  .setRoot( "data" ) );
+        restAssuredThat( response -> response.statusCode( code ) );
+    }
 
+    @Then( "the response payload on {string} contains:" )
+    public void jsonResponseValidator( String jsonPath,
+                                       @Transpose Map<String, String> expectedPayload )
+            throws
+            JSONException
+    {
+        String expectedJSON = mapToJson( expectedPayload );
 
-        Employ expectedUser = new Employ();
-        expectedUser.setId( 5 );
-        expectedUser.setName( "Airi Satou" );
-        expectedUser.setSalary( "162700" );
-        expectedUser.setAge( 33 );
-        assertThat( actualEmployees,
-                    is( not( empty() ) ) );
+        JSONAssert.assertEquals( expectedJSON,
+                                 extractJSONOString( lastResponse().getBody(),
+                                                     jsonPath ),
+                                 getJsonComparator( JSONCompareMode.LENIENT ) );
+    }
 
-        assertThat( actualEmployees,
-                    hasItem( expectedUser ) );
+    @Before
+    public void initRequestSpec()
+    {
+        restClient.preparesForRESTCalls();
     }
 }

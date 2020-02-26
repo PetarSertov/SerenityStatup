@@ -1,8 +1,9 @@
 package net.jakim.steps_libraries.api;
 
-import io.restassured.RestAssured;
-import io.restassured.response.Response;
+import io.restassured.http.ContentType;
+import io.restassured.specification.RequestSpecification;
 import net.serenitybdd.core.environment.EnvironmentSpecificConfiguration;
+import net.serenitybdd.rest.SerenityRest;
 import net.thucydides.core.annotations.Step;
 import net.thucydides.core.util.EnvironmentVariables;
 import org.slf4j.Logger;
@@ -14,26 +15,47 @@ import org.slf4j.LoggerFactory;
  **/
 public class CommonAPICalls
 {
-    private Response response;
-    EnvironmentVariables environmentVariables;
+    private EnvironmentVariables environmentVariables;
+    private RequestSpecification requestSpecification;
+
+
     private final static Logger LOG = LoggerFactory.getLogger( CommonAPICalls.class );
 
-    @Step( "performs GET {0}" )
-    public void get( String resourcePath )
+    @Step( "prepares a REST client" )
+    public void preparesForRESTCalls()
     {
-        LOG.info( "Inside get() method" );
-        String hostURL = EnvironmentSpecificConfiguration.from( environmentVariables )
-                                                         .getProperty( "api.base.url" );
-        String getURL = hostURL + resourcePath;
-        LOG.info( "Requesting GET: {}",
-                  getURL );
-        this.response = RestAssured.get( getURL );
-        LOG.info( "Got Response {}", response );
-        LOG.info( "Exiting get() method" );
+        requestSpecification = SerenityRest
+                .given()
+                .baseUri( serviceBaseURI() )
+                .accept( ContentType.ANY )
+                .contentType( ContentType.JSON )
+                .header( "User-Agent",
+                         "GAN-Automation" );
     }
 
-    public Response getLastResponse()
+    @Step( "defines the request body \"{0}\"" )
+    public void setsBody( final String jsonString )
     {
-        return response;
+        requestSpecification
+                .with()
+                .body( jsonString )
+                .log()
+                .all();
+    }
+
+    @Step( "performs POST request to \"{0}\"" )
+    public void postsTo( final String restEndPointURI )
+    {
+        requestSpecification
+                .when()
+                .post( restEndPointURI )
+                .andReturn();
+    }
+
+    private String serviceBaseURI()
+    {
+        return EnvironmentSpecificConfiguration
+                .from( this.environmentVariables )
+                .getProperty( "api.base.uri" );
     }
 }
