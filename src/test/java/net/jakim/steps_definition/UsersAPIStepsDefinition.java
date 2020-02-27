@@ -1,23 +1,25 @@
 package net.jakim.steps_definition;
 
+import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.cucumber.java.Transpose;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import io.restassured.http.Method;
 import net.jakim.steps_libraries.api.CommonAPICalls;
 import net.thucydides.core.annotations.Steps;
 import org.json.JSONException;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
 import static net.jakim.utils.JSONUtils.*;
 import static net.serenitybdd.rest.SerenityRest.lastResponse;
 import static net.serenitybdd.rest.SerenityRest.restAssuredThat;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.core.IsNot.not;
 
 /**
  * @author yakimfb
@@ -25,8 +27,6 @@ import static net.serenitybdd.rest.SerenityRest.restAssuredThat;
  **/
 public class UsersAPIStepsDefinition
 {
-    private final static Logger LOG = LoggerFactory.getLogger( UsersAPIStepsDefinition.class );
-
     @Steps
     CommonAPICalls restClient;
 
@@ -37,10 +37,22 @@ public class UsersAPIStepsDefinition
         restClient.setsBody( jsonString );
     }
 
-    @When( "the api client does a POST to {string}" )
-    public void playerCompletesTheChangePasswordForm( String restEndPoint )
+    @When( "the api client does a {} request to {string}" )
+    public void performJSONRequest( Method method,
+                                    String restEndPoint )
     {
-        restClient.postsTo( restEndPoint );
+        restClient.requests( method,
+                             restEndPoint );
+    }
+
+    @When( "the api client does a {} request to {string}:" )
+    public void performJSONRequest( Method method,
+                                    String restEndPoint,
+                                    @Transpose Map<String, String> pathVariables )
+    {
+        restClient.requests( method,
+                             restEndPoint,
+                             pathVariables );
     }
 
     @Then( "a response with status code {int} is returned" )
@@ -63,9 +75,24 @@ public class UsersAPIStepsDefinition
                                  getJsonComparator( JSONCompareMode.LENIENT ) );
     }
 
+    @Then( "the response payload on {string} is an array" )
+    public void theResponsePayloadOnIsAnArray( String path )
+    {
+        restAssuredThat( response -> response.body( path,
+                                                    not( empty() ) ) );
+    }
+
     @Before
     public void initRequestSpec()
     {
         restClient.preparesForRESTCalls();
     }
+
+    @After
+    public void resetRequestSpec()
+    {
+        restClient.tearsDownREST();
+    }
+
+
 }

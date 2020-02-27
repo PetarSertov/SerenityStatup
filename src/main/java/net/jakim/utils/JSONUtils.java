@@ -58,7 +58,7 @@ public class JSONUtils
 
         logger.info( "Extracting JSON from {}",
                      body );
-        Map jsonMAP = body
+        Map<String, Object> jsonMAP = body
                 .jsonPath()
                 .getJsonObject( jsonPath );
         logger.info( "Extracted JSON  {} as map",
@@ -76,7 +76,7 @@ public class JSONUtils
     {
         return new CustomComparator( comparatorMode,
                                      new Customization( "***",
-                                                        // apply regex mather to app paths
-                                                        new RegularExpressionValueMatcher() ) );
+                                                        // apples regex matcher to app paths
+                                                        new RegularExpressionValueMatcher<>() ) );
     }
 }

@@ -13,7 +13,7 @@ import org.junit.runner.RunWith;
                 },
         features = "features/",
         glue = "net/jakim/steps_definition",
-        tags = { "" } )
+        tags = { "@debug" } )
 public class RunBDDTests
 {
 }
