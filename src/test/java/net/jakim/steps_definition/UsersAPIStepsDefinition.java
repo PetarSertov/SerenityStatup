@@ -82,6 +82,12 @@ public class UsersAPIStepsDefinition
                                                     not( empty() ) ) );
     }
 
+    @Then( "the response payload matches json schema {string}" )
+    public void theResponsePayloadMatchesJsonSchema( String schema )
+    {
+        restClient.assuresJSONSchema( schema );
+    }
+
     @Before
     public void initRequestSpec()
     {
@@ -93,6 +99,5 @@ public class UsersAPIStepsDefinition
     {
         restClient.tearsDownREST();
     }
-
 
 }

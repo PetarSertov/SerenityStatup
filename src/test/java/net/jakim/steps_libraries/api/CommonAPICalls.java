@@ -1,7 +1,10 @@
 package net.jakim.steps_libraries.api;
 
+import cucumber.runtime.formatter.SerenityReporter;
 import io.restassured.http.ContentType;
 import io.restassured.http.Method;
+import net.serenitybdd.core.Serenity;
+import net.serenitybdd.core.SerenityReports;
 import net.serenitybdd.core.environment.EnvironmentSpecificConfiguration;
 import net.serenitybdd.rest.SerenityRest;
 import net.thucydides.core.annotations.Step;
@@ -10,8 +13,13 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 
+import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
 import static net.serenitybdd.rest.SerenityRest.*;
 
 /**
@@ -99,5 +107,25 @@ public class CommonAPICalls
 
         LOG.info( "Exiting serviceBaseURI() method" );
         return baseURU;
+    }
+
+    @Step("Asserting {0} json schema...")
+    public void assuresJSONSchema( String schema )
+    {
+        String pathToSchema = "json_schemas/" + schema + ".json";
+        Path schemaFile = Paths.get( getClass().getClassLoader()
+                                               .getResource( pathToSchema )
+                                               .getPath() );
+        try
+        {
+            Serenity.recordReportData()
+                    .withTitle( schema + " json schema" )
+                    .fromFile( schemaFile );
+        } catch ( IOException e )
+        {
+            e.printStackTrace();
+        }
+
+        restAssuredThat( response -> response.body( matchesJsonSchemaInClasspath( pathToSchema ) ) );
     }
 }

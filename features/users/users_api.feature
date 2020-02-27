@@ -24,12 +24,14 @@ Feature: Users API
       | success |
     And the response payload on "data" is an array
 
+    @debug
   Scenario: Successful User Creation
     Given the following body is prepared:
       | name            | salary | age |
       | Milko Kavaljiev | 5000   | 43  |
     When the api client does a POST request to "/api/v1/create"
     Then a response with status code 200 is returned
+    And the response payload matches json schema "user_o"
     And the response payload on "$" contains:
       | status  |
       | success |
